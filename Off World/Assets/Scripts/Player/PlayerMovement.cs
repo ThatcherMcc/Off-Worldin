@@ -1,3 +1,4 @@
+using JetBrains.Rider.Unity.Editor;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -38,6 +39,11 @@ public class PlayerMovement : MonoBehaviour
     private RaycastHit slopeHit;
     private bool exitingSlope;
 
+    [Header("Floating")]
+    public float RideHeight;
+    public float RideSpringStrength;
+    public float RideSpringDamper;
+
     public Transform orientation;
 
     float horizontalInput;
@@ -46,6 +52,7 @@ public class PlayerMovement : MonoBehaviour
     Vector3 moveDirection;
 
     Rigidbody rb;
+    CapsuleCollider col;
 
     public MovementState state;
 
@@ -70,35 +77,25 @@ public class PlayerMovement : MonoBehaviour
     private void Update()
     {
         // Keeping grounded correct whether on ground or slope
-        grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.3f, whatIsGround);
-        if (OnSlope())
-        {
-            grounded = true;
-        }
-        // Handles my Inputs for Jumping and Crouching
-        MyInput();
+        grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.3f);
 
-        // Handles speed so the player maxs out instead of becoming the flash
-        SpeedControl();
+        MyInput(); // Handles my Inputs for Jumping and Crouching
+        SpeedControl(); // Handles speed so the player maxs out instead of becoming the flash
+        StateHandler(); // Keeps track of the state my player is in
 
-        // Keeps track of the state my player is in
-        StateHandler();
-
-        // If im touching ground make sure theres drag
-        if(grounded)
-        {
-            rb.drag = groundDrag;
-        }
-        else
-        {
-            rb.drag = 0;
-        }
+        
+        if (grounded) // If im touching ground make sure theres drag
+        { rb.drag = groundDrag; }
+        else 
+        { rb.drag = 0.5f; }
     }
 
     private void FixedUpdate()
     {
         // Move the Player based on the inputs from MyInput()
         MovePlayer();
+
+        ApplyFloating();
     }
 
     private void MyInput()
@@ -161,25 +158,28 @@ public class PlayerMovement : MonoBehaviour
 
         if (OnSlope() && !exitingSlope)
         {
-            rb.AddForce(GetSlopeMoveDirection() * moveSpeed * 10f, ForceMode.Force);
+            Vector3 slopeMoveDirection = GetSlopeMoveDirection();
+
+            // Adjust movement force based on slope angle
+            float slopeAngle = Vector3.Angle(Vector3.up, slopeHit.normal);
+            float slopeModifier = Mathf.Lerp(1f, 0.5f, slopeAngle / maxSlopeAngle);
+
+            rb.AddForce(slopeMoveDirection * moveSpeed * slopeModifier * 10f, ForceMode.Force);
 
             if (rb.velocity.y > 0)
             {
-                rb.AddForce(Vector3.down * 80f, ForceMode.Force); // Adding a downward force to keep the player grounded
+                rb.AddForce(Vector3.down * 20f, ForceMode.Force); // Adding a downward force to keep the player grounded
             }
         }
-
         else if (grounded)
         {
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
         }
-
-        else if(!grounded)
+        else if (!grounded)
         {
             rb.AddForce(moveDirection.normalized * moveSpeed * airSpeedMultiplier * 10f, ForceMode.Force);
         }
 
-        rb.useGravity = !OnSlope();
     }
 
     // caps off the speed
@@ -206,38 +206,71 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // jumps
-    private void Jump()
-    {
+    private void Jump() {
         exitingSlope = true;
-
         // reset y value so that player on the ground
         rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
-
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
     }
 
-    private void ResetJump()
-    {
+    private void ResetJump() {
         readyToJump = true;
-
         exitingSlope = false;
     }
 
     // check whether we are on slope
-    private bool OnSlope()
-    {
+    private bool OnSlope() {
         if (Physics.Raycast(transform.position, Vector3.down, out slopeHit, playerHeight * .5f + .3f))
         {
             float angle = Vector3.Angle(Vector3.up, slopeHit.normal);
             return angle < maxSlopeAngle && angle != 0;
-        }
-
+        } 
         return false;
     }
 
-    private Vector3 GetSlopeMoveDirection()
-    {
+    private Vector3 GetSlopeMoveDirection() {
         return Vector3.ProjectOnPlane(moveDirection, slopeHit.normal).normalized;
     }
+
+    void ApplyFloating()
+    {
+        RaycastHit hit;
+
+        // Perform the raycast
+        if (Physics.Raycast(transform.position, Vector3.down, out hit))
+        {
+            Vector3 vel = rb.velocity;
+            Vector3 rayDir = -Vector3.up;
+
+            Vector3 otherVel = hit.rigidbody != null ? hit.rigidbody.velocity : Vector3.zero;
+            Rigidbody hitBody = hit.rigidbody;
+            if (hitBody != null)
+            {
+                otherVel = hitBody.velocity;
+            }
+
+            float rayDirVel = Vector3.Dot(rayDir, vel);
+            float otherDirVel = Vector3.Dot(rayDir, otherVel);
+
+            float relVel = rayDirVel - otherDirVel;
+
+            float x = hit.distance - RideHeight;
+
+            // Calculate spring force
+            float springForce = (x * RideSpringStrength) - (relVel * RideSpringDamper);
+
+            // Apply force to the player
+            rb.AddForce(rayDir * springForce);
+
+            // Apply an equal but opposite force to the hit rigidbody (if any)
+            if (hit.rigidbody != null)
+            {
+                hit.rigidbody.AddForceAtPosition(rayDir * -springForce, hit.point);
+            }
+        }
+    }
 }
+
+
+
 
