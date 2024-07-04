@@ -131,7 +131,7 @@ public class PlayerMovement : MonoBehaviour
     private void StateHandler()
     { 
         // changes state to the respective MovementState
-        if (grounded && Input.GetKey(sprintKey))
+        if (Input.GetKey(sprintKey))
         {
             state = MovementState.sprinting;
             moveSpeed = sprintSpeed;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,14 +8,20 @@ public class PickUpController : MonoBehaviour
     [Header("Camera")]
     [SerializeField] private Transform fpsCam;
     [SerializeField] private Transform objectGrabPointTransform;
+    [SerializeField] private Transform objectGrabPointOffHandTransform;
+
+    [Header("Type2Grab")]
     [SerializeField] private LayerMask pickUpLayerMask;
+    [SerializeField] private LayerMask enemyPickUpLayerMask;
 
     [Header("Properties")]
     public float pickUpRange = 3f;
+    public float pickUpRadius = .5f;
     public float dropForward, dropUpwardForce;
 
     [Header("Equip Status")]
     public bool isEquipped = false;
+    public bool isEquippedOffHand = false;
 
     [Header("KeyBinds")]
     public KeyCode pick = KeyCode.E;
@@ -22,7 +29,10 @@ public class PickUpController : MonoBehaviour
     public KeyCode eat = KeyCode.R;
 
     private GameObject heldObject;
+    private GameObject heldObjectOffHand;
+
     private ObjectGrabbable objectGrabbable;
+    private EnemyGrabbable enemyGrabbable;
 
 
     void Update()
@@ -40,6 +50,14 @@ public class PickUpController : MonoBehaviour
         {
             Eat();
         }
+        if (Input.GetMouseButtonDown(0))
+        {
+            UseAction();
+        }
+        if (Input.GetMouseButtonDown(1))
+        {
+            UseAltAction();
+        }
 
     }
 
@@ -47,7 +65,7 @@ public class PickUpController : MonoBehaviour
     {
         if (!isEquipped && objectGrabbable == null)
         {
-            if (Physics.Raycast(fpsCam.position, fpsCam.forward, out RaycastHit raycastHit, pickUpRange, pickUpLayerMask))
+            if (Physics.SphereCast(fpsCam.position, pickUpRadius, fpsCam.forward, out RaycastHit raycastHit, pickUpRange, pickUpLayerMask))
             {
                 if (raycastHit.transform.TryGetComponent(out ObjectGrabbable newObjectGrabbable))
                 {
@@ -79,6 +97,35 @@ public class PickUpController : MonoBehaviour
             powerItem.Eat();
             isEquipped = false;
             heldObject = null;
+        }
+    }
+
+    private void UseAction()
+    {
+        if (isEquipped && heldObject.GetComponent<NetScript>())
+        {
+            if (Physics.SphereCast(fpsCam.position, pickUpRadius, fpsCam.forward, out RaycastHit raycastHit, pickUpRange, enemyPickUpLayerMask))
+            {
+                if (raycastHit.transform.TryGetComponent(out EnemyGrabbable newEnemyGrabbable))
+                {
+                    isEquippedOffHand = true;
+                    enemyGrabbable = newEnemyGrabbable;
+                    heldObjectOffHand = enemyGrabbable.gameObject;
+                    enemyGrabbable.Capture(objectGrabPointOffHandTransform);
+                }
+            }
+        }
+    }
+
+    private void UseAltAction()
+    {
+        if (isEquipped && heldObject.GetComponent<NetScript>() && isEquippedOffHand)
+        {
+            isEquippedOffHand = false;
+            enemyGrabbable.Release();
+            enemyGrabbable = null;
+            heldObjectOffHand = null;
+
         }
     }
 }
