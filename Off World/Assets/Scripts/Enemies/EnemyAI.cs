@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using TMPro;
 using UnityEngine;
 
-public class FrogAI : MonoBehaviour
+public class EnemyAI : MonoBehaviour
 {
     [Header("LOS")]
     [SerializeField] private float noticeRadius;
@@ -14,19 +14,18 @@ public class FrogAI : MonoBehaviour
     [SerializeField] private Transform player;
 
     [Header("Enemy Idle")]
-    private Vector3 mainIdlePos;
+    [SerializeField] private Vector3 mainIdlePos;
     [SerializeField] private float moveDuration;
+    [SerializeField] private float breakDuration;
     [SerializeField] private float maxWanderDist;
-    [SerializeField] private float jumpForce;
     private float minWanderDist;
 
     private float idleSpeed;
-    private float idleMovingTimer = 0;
-    private float idleBreakTimer = 0;
+    private float idleMovingTimer;
+    private float idleBreakTimer;
+    private bool onBreak;
 
     public float enemySpeed;
-
-    private float runHopTimer = 0;
 
     private bool returningToStart;
 
@@ -47,7 +46,7 @@ public class FrogAI : MonoBehaviour
     {
         if (InLineOfSight())
         {
-            RunFromPlayer();
+            FollowPlayer();
         }
         else
         {
@@ -69,18 +68,11 @@ public class FrogAI : MonoBehaviour
         return false;
     }
 
-    private void RunFromPlayer()
+    private void FollowPlayer()
     {
-        Vector3 direction = (transform.position - player.position).normalized;
-        float newSpeed = enemySpeed * 1.5f;
-        if (runHopTimer <= 0)
-        {
-            rb.MovePosition(transform.position + direction * newSpeed * Time.deltaTime);
-            Hop(direction);
-            runHopTimer = 1;
-        }
-        runHopTimer -= Time.deltaTime;
+        Vector3 direction = (player.position - transform.position).normalized;
 
+        rb.MovePosition(transform.position + direction * enemySpeed * Time.deltaTime);
         Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, enemySpeed * Time.deltaTime);
     }
@@ -89,16 +81,41 @@ public class FrogAI : MonoBehaviour
     {
         isReturning();
 
-        if (!returningToStart)
-        {
+        if (!returningToStart) {
             IdleWander();
-        }
-        else
-        {
+        } else {
             ReturnToStart();
         }
+
+
     }
 
+    private void ReturnToStart()
+    {
+        Vector3 direction = (player.position - transform.position).normalized;
+        rb.MovePosition(transform.position + direction * idleSpeed * Time.deltaTime);
+    }
+
+    private void IdleWander()
+    {
+        if (idleMovingTimer <= 0 && idleBreakTimer <= 0)
+        {
+            GetIdleDirection();
+            onBreak = false;
+        }
+        else if (idleMovingTimer <= 0 && idleBreakTimer > 0)
+        {
+            onBreak = true;
+            idleBreakTimer -= Time.deltaTime;
+        }
+
+        if (!onBreak)
+        {
+            rb.MovePosition(transform.position + idleDirection * idleSpeed * Time.deltaTime);
+            idleMovingTimer -= Time.deltaTime;
+        }
+    }
+    
     private void isReturning()
     {
         if (Vector3.Distance(transform.position, mainIdlePos) > maxWanderDist)
@@ -111,55 +128,16 @@ public class FrogAI : MonoBehaviour
         }
     }
 
-    private void ReturnToStart()
-    {
-        if (idleBreakTimer <= 0)
-        {
-            Vector3 direction = (mainIdlePos - transform.position).normalized;
-            rb.MovePosition(transform.position + direction * idleSpeed * Time.deltaTime);
-            Hop(direction);
-            idleBreakTimer = 4;
-        }
-        else
-        {
-            idleBreakTimer -= Time.deltaTime;
-        }
-    }
-
-    private void IdleWander()
-    {
-        // Not resting or currently moving? Try moving!
-        if (idleBreakTimer <= 0)
-        {
-            // Not moving? Get a new direction to move
-            if (idleMovingTimer <= 0)
-            {
-                idleMovingTimer = moveDuration;
-                GetIdleDirection();
-            }
-            else
-            {
-                rb.MovePosition(transform.position + idleDirection * idleSpeed * Time.deltaTime);
-                Hop(idleDirection);
-                idleBreakTimer = Random.Range(4, 12);
-            }
-        }
-        idleMovingTimer -= Time.deltaTime;
-        idleBreakTimer -= Time.deltaTime;
-    }
-
     private void GetIdleDirection()
     {
+        idleMovingTimer = moveDuration;
+
         float angle = Random.Range(0f, 360f);
         Vector3 randomDirection = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)).normalized;
         Vector3 targetPosition = transform.position + randomDirection * enemySpeed * idleMovingTimer;
 
         idleDirection = randomDirection;
-    }
-
-    private void Hop(Vector3 direction)
-    {
-        rb.AddForce(new Vector3(direction.x, 1, direction.z) * jumpForce, ForceMode.Impulse);
+        idleBreakTimer = breakDuration;
     }
 
     private void OnDrawGizmos()
