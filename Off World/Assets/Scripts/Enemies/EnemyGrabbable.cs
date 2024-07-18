@@ -6,17 +6,15 @@ public class EnemyGrabbable : MonoBehaviour
 {
     private Rigidbody rb;
     private Transform objectGrabPointTransform;
-    private EnemyAI enemyAI;
+    private IEnemy enemy;
 
-    private float tempSpeed;
 
     public bool equipped = false;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        enemyAI = GetComponent<EnemyAI>();
-        tempSpeed = enemyAI.enemySpeed;
+        enemy = GetComponent<IEnemy>();
     }
 
     private void FixedUpdate()
@@ -32,19 +30,21 @@ public class EnemyGrabbable : MonoBehaviour
     public void Capture(Transform objectGrabPointTransform)
     {
         equipped = true;
-        enemyAI.enemySpeed = 0;
+
+        enemy.EnableAI(false);
+
         this.objectGrabPointTransform = objectGrabPointTransform;
         rb.useGravity = false;
-        rb.drag = 5;
     }
 
     public void Release()
     {
         //Vector3 momentum = new Vector3()
         equipped = false;
-        enemyAI.enemySpeed = tempSpeed;
+
+        enemy.EnableAI(true);
+
         this.objectGrabPointTransform = null;
         rb.useGravity = true;
-        rb.drag = 0;
     }
 }

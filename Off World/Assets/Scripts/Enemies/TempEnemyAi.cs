@@ -4,10 +4,11 @@ using System.Runtime.CompilerServices;
 using TMPro;
 using UnityEngine;
 
-public class FrogAI : MonoBehaviour, IEnemy
+public class TempEnemyAI : MonoBehaviour, IEnemy
 {
     [Header("LOS")]
     [SerializeField] private float noticeRadius;
+    [SerializeField] private LayerMask enviornmentMask;
 
     [Header("PlayerProperties")]
     [SerializeField] private Transform player;
@@ -175,7 +176,6 @@ public class FrogAI : MonoBehaviour, IEnemy
     {
         float angle = Random.Range(0f, 360f);
         Vector3 randomDirection = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)).normalized;
-        Vector3 targetPosition = transform.position + randomDirection * enemySpeed * idleMovingTimer;
 
         idleDirection = randomDirection;
     }
@@ -183,5 +183,11 @@ public class FrogAI : MonoBehaviour, IEnemy
     private void Hop(Vector3 direction)
     {
         rb.AddForce(new Vector3(direction.x, 1, direction.z) * jumpForce, ForceMode.Impulse);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(mainIdlePos, maxWanderDist);
     }
 }

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PowerItem : MonoBehaviour
+public class SpeedPowerItem : MonoBehaviour, PowerItemI
 {
     private GameObject player;
     private PlayerMovement playerMovement;
@@ -10,7 +10,7 @@ public class PowerItem : MonoBehaviour
     [Header("Powerup")]
     [SerializeField] private float speedBoost = 2;
 
-    void Start()
+    void Awake()
     {
         player = GameObject.Find("Player");
         playerMovement = player.GetComponent<PlayerMovement>();

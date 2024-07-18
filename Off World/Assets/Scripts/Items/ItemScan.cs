@@ -8,10 +8,15 @@ public class ItemScan : MonoBehaviour
     private GameObject powerItem;
 
     private ObjectGrabbable objectGrabbable;
+    private EnemyGrabbable enemyGrabbable;
+
+    private bool hasScanned = false;
+
+    
 
     private void OnTriggerStay(Collider collider)
     {
-        if (collider.GetComponent<ItemScannable>())
+        if (!hasScanned && collider.GetComponent<ItemScannable>())
         {
             ScanItem(collider);
         }
@@ -21,12 +26,28 @@ public class ItemScan : MonoBehaviour
     {
         itemScannable = collider.gameObject;
         powerItem = itemScannable.GetComponent<ItemScannable>().powerItem;
-        objectGrabbable = itemScannable.GetComponent<ObjectGrabbable>();
 
-        if (objectGrabbable.equipped == false)
+        if (itemScannable.GetComponent<EnemyGrabbable>())
         {
-            Destroy(itemScannable);
-            Instantiate(powerItem, transform.position, transform.rotation);
+            enemyGrabbable = itemScannable.GetComponent<EnemyGrabbable>();
+            if (enemyGrabbable.equipped == false)
+            {
+                Destroy(itemScannable);
+                Instantiate(powerItem, transform.position, transform.rotation);
+                hasScanned = true;
+            }
+        }
+
+        if (itemScannable.GetComponent<ObjectGrabbable>())
+        {
+            objectGrabbable = itemScannable.GetComponent<ObjectGrabbable>();
+
+            if (objectGrabbable.equipped == false)
+            {
+                Destroy(itemScannable);
+                Instantiate(powerItem, transform.position, transform.rotation);
+                hasScanned = true;
+            }
         }
     }
 }

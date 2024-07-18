@@ -4,13 +4,11 @@ using System.Runtime.CompilerServices;
 using TMPro;
 using UnityEngine;
 
-public class EnemyAI : MonoBehaviour
+public class EnemyAI : MonoBehaviour, IEnemy
 {
     [Header("LOS")]
     [SerializeField] private float noticeRadius;
     [SerializeField] private LayerMask enviornmentMask;
-
-    [Header("PlayerProperties")]
     [SerializeField] private Transform player;
 
     [Header("Enemy Idle")]
@@ -19,15 +17,21 @@ public class EnemyAI : MonoBehaviour
     [SerializeField] private float breakDuration;
     [SerializeField] private float maxWanderDist;
     private float minWanderDist;
-
     private float idleSpeed;
     private float idleMovingTimer;
     private float idleBreakTimer;
     private bool onBreak;
 
     public float enemySpeed;
-
     private bool returningToStart;
+
+    // Interface IEnemy
+    public void EnableAI(bool enable)
+    {
+        aiEnabled = enable;
+    }
+    private bool aiEnabled = true;
+
 
     private Vector3 idleDirection;
     Rigidbody rb;
@@ -44,13 +48,16 @@ public class EnemyAI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (InLineOfSight())
+        if (aiEnabled)
         {
-            FollowPlayer();
-        }
-        else
-        {
-            Idle();
+            if (InLineOfSight())
+            {
+                FollowPlayer();
+            }
+            else
+            {
+                Idle();
+            }
         }
     }
 
@@ -134,7 +141,6 @@ public class EnemyAI : MonoBehaviour
 
         float angle = Random.Range(0f, 360f);
         Vector3 randomDirection = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)).normalized;
-        Vector3 targetPosition = transform.position + randomDirection * enemySpeed * idleMovingTimer;
 
         idleDirection = randomDirection;
         idleBreakTimer = breakDuration;
@@ -146,21 +152,4 @@ public class EnemyAI : MonoBehaviour
         Gizmos.DrawWireSphere(mainIdlePos, maxWanderDist);
     }
 
-    private bool IsValidIdleDirection(Vector3 targetPosition)
-    {
-        // Check if within max wander distance
-        if (Vector3.Distance(mainIdlePos, targetPosition) > maxWanderDist)
-        {
-            return false;
-        }
-
-        // Check if line of sight to starting position
-        Vector3 directionToStart = (mainIdlePos - targetPosition).normalized;
-        float distanceToStart = Vector3.Distance(mainIdlePos, targetPosition);
-        if (!Physics.Raycast(targetPosition, directionToStart, distanceToStart))
-        {
-            return true;
-        }
-        return false;
-    }
 }

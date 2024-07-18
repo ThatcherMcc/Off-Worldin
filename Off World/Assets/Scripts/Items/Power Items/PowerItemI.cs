@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class NetScript : MonoBehaviour
+public interface PowerItemI
 {
-   
+    void Eat();
 }

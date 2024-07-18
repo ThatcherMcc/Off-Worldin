@@ -91,12 +91,15 @@ public class PickUpController : MonoBehaviour
 
     private void Eat()
     {
-        if (isEquipped && heldObject.GetComponent<PowerItem>())
+        if (isEquipped && heldObject != null)
         {
-            PowerItem powerItem = heldObject.GetComponent<PowerItem>();
-            powerItem.Eat();
-            isEquipped = false;
-            heldObject = null;
+            PowerItemI powerItem = heldObject.GetComponent<PowerItemI>() as PowerItemI;
+            if (powerItem != null)
+            {
+                powerItem.Eat();
+                isEquipped = false;
+                heldObject = null;
+            }
         }
     }
 
@@ -119,7 +122,7 @@ public class PickUpController : MonoBehaviour
 
     private void UseAltAction()
     {
-        if (isEquipped && heldObject.GetComponent<NetScript>() && isEquippedOffHand)
+        if (isEquippedOffHand)
         {
             isEquippedOffHand = false;
             enemyGrabbable.Release();
