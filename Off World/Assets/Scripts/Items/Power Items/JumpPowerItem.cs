@@ -21,7 +21,7 @@ public class JumpPowerItem : MonoBehaviour, PowerItemI
     {
         if (playerMovement != null)
         {
-            playerMovement.jumpForce = playerMovement.walkSpeed * jumpBoost;
+            playerMovement.jumpForce *= jumpBoost;
 
             Destroy(gameObject);
         }

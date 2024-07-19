@@ -10,10 +10,17 @@ public class ItemScan : MonoBehaviour
     private ObjectGrabbable objectGrabbable;
     private EnemyGrabbable enemyGrabbable;
 
+    private float scanTimer = 0;
     private bool hasScanned = false;
 
-    
-
+    private void Update()
+    {
+        if (scanTimer <= 0)
+        {
+            hasScanned = false;
+        }
+        scanTimer -= Time.deltaTime;
+    }
     private void OnTriggerStay(Collider collider)
     {
         if (!hasScanned && collider.GetComponent<ItemScannable>())

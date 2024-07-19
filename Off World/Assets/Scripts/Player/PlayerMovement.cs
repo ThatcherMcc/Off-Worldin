@@ -43,6 +43,7 @@ public class PlayerMovement : MonoBehaviour
     public float RideHeight;
     public float RideSpringStrength;
     public float RideSpringDamper;
+    private float groundRange = 1.4f;
 
     public Transform orientation;
 
@@ -119,12 +120,15 @@ public class PlayerMovement : MonoBehaviour
         {
             transform.localScale = new Vector3(transform.localScale.x, crouchYScale, transform.localScale.z);
             rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
+            RideHeight = RideHeight / 2;
+
         }
 
         // stop crouching
         if (Input.GetKeyUp(crouchKey))
         {
             transform.localScale = new Vector3(transform.localScale.x, startYScale, transform.localScale.z);
+            RideHeight = RideHeight * 2;
         }
     }
 
@@ -237,8 +241,9 @@ public class PlayerMovement : MonoBehaviour
         RaycastHit hit;
 
         // Perform the raycast
-        if (Physics.Raycast(transform.position, Vector3.down, out hit))
+        if (Physics.Raycast(transform.position, Vector3.down, out hit, groundRange))
         {
+            rb.useGravity = false;
             Vector3 vel = rb.velocity;
             Vector3 rayDir = -Vector3.up;
 
@@ -267,6 +272,10 @@ public class PlayerMovement : MonoBehaviour
             {
                 hit.rigidbody.AddForceAtPosition(rayDir * -springForce, hit.point);
             }
+        }
+        else
+        {
+            rb.useGravity = true;
         }
     }
 }
