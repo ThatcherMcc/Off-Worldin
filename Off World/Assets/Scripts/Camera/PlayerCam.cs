@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class PlayerCam : MonoBehaviour
 {
+    [SerializeField] private Transform player;
     public float sensX;
     public float sensY;
 
@@ -30,6 +31,7 @@ public class PlayerCam : MonoBehaviour
 
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 
+        player.rotation = Quaternion.Euler(0, yRotation, 0);
         transform.rotation = Quaternion.Euler(xRotation, yRotation, 0);
         orientation.rotation = Quaternion.Euler(0, yRotation, 0);
     }

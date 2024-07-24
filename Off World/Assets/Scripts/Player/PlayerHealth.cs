@@ -4,33 +4,48 @@ using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour
 {
-    public float health = 100;
+    [SerializeField] Healthbar healthbar;
+    public int maxHealth = 100;
+    private int health;
 
-    private EnemyAttack enemyAttack;
 
-    Rigidbody rb;
-
-    // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
-        rb = GetComponent<Rigidbody>();
+        health = maxHealth;
     }
 
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            PlayerHeal(20);
+        }
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            PlayerTakeDMG(20);
+        }
+    }
+
+    public void PlayerHeal(int healing)
+    {
+        health += healing;
+        healthbar.SetHealth(health);
+
+        if (health > 100)
+        {
+            health = maxHealth;
+        }
+    }
+
+    public void PlayerTakeDMG(int damage)
+    {
+        health -= damage;
+        healthbar.SetHealth(health);
+
         if (health <= 0)
         {
             health = 0;
             Die();
-        }    
-    }
-
-    private void OnTriggerEnter(Collider collider)
-    {
-        if (collider.gameObject.GetComponent<EnemyAttack>())
-        {
-
-            health -= enemyAttack.damage;
         }
     }
 

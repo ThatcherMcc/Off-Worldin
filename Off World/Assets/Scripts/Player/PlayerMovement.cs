@@ -264,6 +264,9 @@ public class PlayerMovement : MonoBehaviour
             // Calculate spring force
             float springForce = (x * RideSpringStrength) - (relVel * RideSpringDamper);
 
+           
+
+
             // Apply force to the player
             rb.AddForce(rayDir * springForce);
 

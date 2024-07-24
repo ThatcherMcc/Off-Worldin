@@ -64,6 +64,10 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: -2495213350466606497, guid: a6285a371751add46aaf3c7f22fc7939, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: a6285a371751add46aaf3c7f22fc7939, type: 3}
       propertyPath: m_Name
       value: AstroNut
