@@ -8,21 +8,23 @@ public class EnemyAI : MonoBehaviour, IEnemy
 {
     [Header("LOS")]
     [SerializeField] private float noticeRadius;
-    [SerializeField] private LayerMask enviornmentMask;
+    private bool chasing;
+    private float chaseTimer = 5;
+
+    [Header("PlayerProperties")]
     [SerializeField] private Transform player;
 
     [Header("Enemy Idle")]
-    [SerializeField] private Vector3 mainIdlePos;
+    private Vector3 mainIdlePos;
     [SerializeField] private float moveDuration;
-    [SerializeField] private float breakDuration;
     [SerializeField] private float maxWanderDist;
     private float minWanderDist;
-    private float idleSpeed;
-    private float idleMovingTimer;
-    private float idleBreakTimer;
-    private bool onBreak;
 
+    private float idleSpeed;
+    private float idleMovingTimer = 0;
+    private float idleBreakTimer = 0;
     public float enemySpeed;
+
     private bool returningToStart;
 
     // Interface IEnemy
@@ -50,14 +52,26 @@ public class EnemyAI : MonoBehaviour, IEnemy
     {
         if (aiEnabled)
         {
-            if (InLineOfSight())
+            if (InLineOfSight() || chasing)
             {
-                FollowPlayer();
+                RunToPlayer();
+                if (chaseTimer <= 0)
+                {
+                    chasing = false;
+                }
+                chaseTimer -= Time.deltaTime;   
             }
             else
             {
                 Idle();
             }
+        }
+        else
+        {
+            Vector3 direction = (player.position - transform.position).normalized;
+            rb.velocity = Vector3.zero;
+            Quaternion rotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+            transform.rotation = rotation;
         }
     }
 
@@ -69,60 +83,36 @@ public class EnemyAI : MonoBehaviour, IEnemy
         {
             if (hit.transform.gameObject.CompareTag("Player"))
             {
+                chasing = true;
                 return true;
             }
         }
         return false;
     }
 
-    private void FollowPlayer()
+    private void RunToPlayer()
     {
         Vector3 direction = (player.position - transform.position).normalized;
+        float newSpeed = enemySpeed * 1.5f;
 
-        rb.MovePosition(transform.position + direction * enemySpeed * Time.deltaTime);
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, enemySpeed * Time.deltaTime);
+        MoveAndLook(direction, newSpeed);
     }
 
     private void Idle()
     {
         isReturning();
 
-        if (!returningToStart) {
+        if (!returningToStart)
+        {
             IdleWander();
-        } else {
+        }
+        else
+        {
             ReturnToStart();
         }
 
-
     }
 
-    private void ReturnToStart()
-    {
-        Vector3 direction = (player.position - transform.position).normalized;
-        rb.MovePosition(transform.position + direction * idleSpeed * Time.deltaTime);
-    }
-
-    private void IdleWander()
-    {
-        if (idleMovingTimer <= 0 && idleBreakTimer <= 0)
-        {
-            GetIdleDirection();
-            onBreak = false;
-        }
-        else if (idleMovingTimer <= 0 && idleBreakTimer > 0)
-        {
-            onBreak = true;
-            idleBreakTimer -= Time.deltaTime;
-        }
-
-        if (!onBreak)
-        {
-            rb.MovePosition(transform.position + idleDirection * idleSpeed * Time.deltaTime);
-            idleMovingTimer -= Time.deltaTime;
-        }
-    }
-    
     private void isReturning()
     {
         if (Vector3.Distance(transform.position, mainIdlePos) > maxWanderDist)
@@ -135,21 +125,58 @@ public class EnemyAI : MonoBehaviour, IEnemy
         }
     }
 
+    private void ReturnToStart()
+    {
+        Vector3 direction = (mainIdlePos - transform.position).normalized;
+
+        MoveAndLook(direction, enemySpeed);
+    }
+
+    private void IdleWander()
+    {
+        if (idleBreakTimer <= 0)
+        {
+            // Not resting or currently moving? Try moving!
+            if (idleMovingTimer <= 0)
+            {
+                GetIdleDirection();
+                moveDuration = Random.Range(6, 10);
+                idleMovingTimer = moveDuration;
+                idleBreakTimer = Random.Range(moveDuration - 1, moveDuration - 2);
+            }
+            else
+            {
+                MoveAndLook(idleDirection, idleSpeed);
+
+                idleMovingTimer -= Time.deltaTime;
+            }
+
+        } else
+        {
+            idleBreakTimer -= Time.deltaTime;
+        }
+    }
+
     private void GetIdleDirection()
     {
-        idleMovingTimer = moveDuration;
-
         float angle = Random.Range(0f, 360f);
         Vector3 randomDirection = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)).normalized;
 
         idleDirection = randomDirection;
-        idleBreakTimer = breakDuration;
+    }
+
+    private void MoveAndLook(Vector3 direction, float speed)
+    {
+        rb.MovePosition(transform.position + direction * speed * Time.deltaTime);
+
+        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, enemySpeed * Time.deltaTime);
     }
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(mainIdlePos, maxWanderDist);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, maxWanderDist);
     }
 
 }
