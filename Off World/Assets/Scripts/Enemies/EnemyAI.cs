@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using TMPro;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class EnemyAI : MonoBehaviour, IEnemy
 {
@@ -13,10 +14,11 @@ public class EnemyAI : MonoBehaviour, IEnemy
 
     [Header("PlayerProperties")]
     [SerializeField] private Transform player;
+    private NavMeshAgent agent;
 
     [Header("Enemy Idle")]
     private Vector3 mainIdlePos;
-    [SerializeField] private float moveDuration;
+    private float moveDuration;
     [SerializeField] private float maxWanderDist;
     private float minWanderDist;
 
@@ -26,6 +28,13 @@ public class EnemyAI : MonoBehaviour, IEnemy
     public float enemySpeed;
 
     private bool returningToStart;
+
+    public MovementState state;
+
+    public enum MovementState
+    {
+        attacking, idle, returning
+    }
 
     // Interface IEnemy
     public void EnableAI(bool enable)
@@ -41,9 +50,10 @@ public class EnemyAI : MonoBehaviour, IEnemy
     // Start is called before the first frame update
     void Awake()
     {
+        agent = GetComponent<NavMeshAgent>();
         rb = GetComponent<Rigidbody>();
         mainIdlePos = transform.position;
-        idleSpeed = enemySpeed / 2;
+        idleSpeed = enemySpeed / 4;
         minWanderDist = maxWanderDist / 3;
     }
 
@@ -54,12 +64,14 @@ public class EnemyAI : MonoBehaviour, IEnemy
         {
             if (InLineOfSight() || chasing)
             {
+                agent.enabled = true;
                 RunToPlayer();
                 if (chaseTimer <= 0)
                 {
                     chasing = false;
                 }
-                chaseTimer -= Time.deltaTime;   
+                chaseTimer -= Time.deltaTime;
+                state = MovementState.attacking;
             }
             else
             {
@@ -84,6 +96,7 @@ public class EnemyAI : MonoBehaviour, IEnemy
             if (hit.transform.gameObject.CompareTag("Player"))
             {
                 chasing = true;
+                chaseTimer = 1;
                 return true;
             }
         }
@@ -92,23 +105,23 @@ public class EnemyAI : MonoBehaviour, IEnemy
 
     private void RunToPlayer()
     {
-        Vector3 direction = (player.position - transform.position).normalized;
-        float newSpeed = enemySpeed * 1.5f;
-
-        MoveAndLook(direction, newSpeed);
+        agent.SetDestination(player.position);
+        agent.speed = enemySpeed;
     }
 
     private void Idle()
     {
         isReturning();
-
+        agent.speed = idleSpeed;
         if (!returningToStart)
         {
             IdleWander();
+            state = MovementState.idle;
         }
         else
         {
             ReturnToStart();
+            state = MovementState.returning;
         }
 
     }
@@ -127,9 +140,7 @@ public class EnemyAI : MonoBehaviour, IEnemy
 
     private void ReturnToStart()
     {
-        Vector3 direction = (mainIdlePos - transform.position).normalized;
-
-        MoveAndLook(direction, enemySpeed);
+        Move(mainIdlePos);
     }
 
     private void IdleWander()
@@ -139,20 +150,25 @@ public class EnemyAI : MonoBehaviour, IEnemy
             // Not resting or currently moving? Try moving!
             if (idleMovingTimer <= 0)
             {
+                moveDuration = Random.Range(4f, 7f);
                 GetIdleDirection();
-                moveDuration = Random.Range(6, 10);
+
                 idleMovingTimer = moveDuration;
-                idleBreakTimer = Random.Range(moveDuration - 1, moveDuration - 2);
+                idleBreakTimer = 3;
             }
             else
             {
-                MoveAndLook(idleDirection, idleSpeed);
+                Move(idleDirection);
+
+                Debug.Log(moveDuration);
 
                 idleMovingTimer -= Time.deltaTime;
             }
 
         } else
         {
+            agent.speed = 0;
+            Debug.Log("Break tIme");
             idleBreakTimer -= Time.deltaTime;
         }
     }
@@ -162,15 +178,15 @@ public class EnemyAI : MonoBehaviour, IEnemy
         float angle = Random.Range(0f, 360f);
         Vector3 randomDirection = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)).normalized;
 
-        idleDirection = randomDirection;
+        float moveDistance = idleSpeed * moveDuration;
+
+        idleDirection = transform.position + (randomDirection * moveDistance);
+        Debug.Log(idleDirection);
     }
 
-    private void MoveAndLook(Vector3 direction, float speed)
+    private void Move(Vector3 direction)
     {
-        rb.MovePosition(transform.position + direction * speed * Time.deltaTime);
-
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, enemySpeed * Time.deltaTime);
+        agent.SetDestination(direction);
     }
 
     private void OnDrawGizmos()

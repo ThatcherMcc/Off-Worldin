@@ -4,7 +4,14 @@ using UnityEngine;
 
 public class EnemyAttack : MonoBehaviour
 {
-    public float damage;
+    public int damage;
 
-    
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            collision.gameObject.GetComponent<PlayerHealth>().PlayerTakeDMG(damage);
+        }
+    }
+
 }
