@@ -158,7 +158,10 @@ public class PlayerMovement : MonoBehaviour
 
     private void MovePlayer()
     {
-        moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+        Vector3 flatForward = orientation.forward;
+        flatForward.y = 0;
+
+        moveDirection = flatForward * verticalInput + orientation.right * horizontalInput;
 
         if (OnSlope() && !exitingSlope)
         {
