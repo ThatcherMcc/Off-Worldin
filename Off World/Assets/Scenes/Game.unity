@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: 7c86d4abbd33b564b9e773aceadb8572, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: c051fe5a20f72814f9643eb10ebbd2fc, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 0.513
   m_FlareFadeSpeed: 3
@@ -1452,13 +1452,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705507993}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.85257757, y: -0.24712303, z: 0.11710328, w: 0.445341}
+  m_LocalRotation: {x: 0.23002249, y: -0.07565806, z: 0.2627916, w: 0.93397325}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 54.811, y: -177.968, z: -146.618}
+  m_LocalEulerAnglesHint: {x: 27.998, y: -1.326, z: 31.099}
 --- !u!114 &705507996
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3416,7 +3416,7 @@ Transform:
   m_GameObject: {fileID: 1631569573}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 207.8494, y: -42.357544, z: 83.84454}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3434,9 +3434,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22e72b437d6f5ba499b53517cb5c7f1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chunks: {x: 16, y: 16}
+  chunks: {x: 64, y: 64}
   chunkResolution: {x: 16, y: 16}
-  terrainMaterial: {fileID: 2100000, guid: 3414fc2e02fcbca4fb0e7b9978474d86, type: 2}
+  terrainMaterial: {fileID: 2100000, guid: 52e842eff2cc9214099ccfa4c1d96f06, type: 2}
+  water: {fileID: 5533806730770900681, guid: 17bbee51ca9f36648a91884e304ff15a, type: 3}
+  waterLevel: 0
+  trees:
+  - {fileID: 1151352430000130636, guid: b4615cff91a15f94f95109fd8ac09353, type: 3}
+  - {fileID: 4237041096923799916, guid: b0b091acdd20ab74295a99e3aee6e2da, type: 3}
+  treeRandomness: 5
+  treeThreshold: 0.3
+  player: {fileID: 476381471}
+  chunksChunkLoaded: 16
+  seed: 446
 --- !u!1 &1708546852
 GameObject:
   m_ObjectHideFlags: 0

@@ -42,10 +42,28 @@ public class TerrainGeneration : MonoBehaviour
         {
             for (int z = 0; z <= chunkGen.chunkResolution.y; z++)
             {
-                float y = Noise(x, z);
+                float y = Noise(x, z, BiomeNoise(x, z));
                 vertices[i] = new Vector3(x * (128 / chunkGen.chunkResolution.x),
                     y,
-                    z * (128 / chunkGen.chunkResolution.y));
+                    z * (128 / chunkGen.chunkResolution.y)
+                    );
+                float doesSpawn = Mathf.PerlinNoise(x + transform.position.x + chunkGen.seed, z + transform.position.z + chunkGen.seed);
+                doesSpawn -= Mathf.PerlinNoise((x + transform.position.x) * 0.5f + chunkGen.seed, (z + transform.position.z) * 0.5f + chunkGen.seed);
+                if (doesSpawn > chunkGen.treeThreshold && y > chunkGen.waterLevel + 5)
+                {
+                    float whatSpawns = Mathf.PerlinNoise(x + transform.position.x + (chunkGen.seed * 5), z + transform.position.z + (chunkGen.seed * 3));
+                    whatSpawns = whatSpawns * chunkGen.trees.Length;
+                    whatSpawns = Mathf.RoundToInt(whatSpawns);
+                    float offset = UnityEngine.Random.Range(-2f, 2f);
+                    offset = offset / 2;
+                    int whatTree = UnityEngine.Random.Range(0, 2);
+                    GameObject current = Instantiate(chunkGen.trees[whatTree], new Vector3(x * (128 / chunkGen.chunkResolution.x) + transform.position.x + offset,
+                       y + transform.position.y,
+                       z * (128 / chunkGen.chunkResolution.y) + transform.position.z + offset),
+                       Quaternion.Euler(0, UnityEngine.Random.Range(0, 360), 0)
+                       );
+                    current.transform.parent = transform;
+                }
                 i++;
             }
         }
@@ -82,19 +100,40 @@ public class TerrainGeneration : MonoBehaviour
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.uv = uv;
-        mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         mesh.triangles = mesh.triangles.Reverse().ToArray();
         meshFilter.mesh = mesh;
+        mesh.RecalculateNormals();
         collider.sharedMesh = mesh;
     }
 
-    float Noise(float x, float z)
+    float Noise(float x, float z, float biomeNoise)
     {
-        float y = Mathf.PerlinNoise(((x * (128 / chunkGen.chunkResolution.x)) + transform.position.x) * 0.02f, 
-            ((z * (128 / chunkGen.chunkResolution.y)) + transform.position.z) * 0.02f) * 10f;
-        y += Mathf.PerlinNoise(((x * (128 / chunkGen.chunkResolution.x)) + transform.position.x) * 0.006f,
-            ((z * (128 / chunkGen.chunkResolution.y)) + transform.position.z) * 0.006f) * 70f;
+        // Base Plate of Noise
+        float y = biomeNoise * 200f;
+        // Mountains
+        float multiplier = 1 + Mathf.Pow(biomeNoise, 3) * 20f;
+        y = y * multiplier;
+        y += (Mathf.PerlinNoise(((x * (128 / chunkGen.chunkResolution.x)) + transform.position.x + chunkGen.seed) * 0.003f,
+            ((z * (128 / chunkGen.chunkResolution.y)) + transform.position.z + chunkGen.seed) * 0.003f) * 200) * biomeNoise;
+        // Hills
+        y += (Mathf.PerlinNoise(((x * (128 / chunkGen.chunkResolution.x)) + transform.position.x + chunkGen.seed) * 0.007f,
+            ((z * (128 / chunkGen.chunkResolution.y)) + transform.position.z + chunkGen.seed) * 0.007f) * 70) * biomeNoise;
+        return y;
+    }
+
+    float BiomeNoise(float x, float z)
+    {
+        // Base Plate of Noise. Quite Spread out but not too much
+        float y = Mathf.PerlinNoise(((x * (128 / chunkGen.chunkResolution.x)) + transform.position.x + chunkGen.seed) * 0.0002f,
+            ((z * (128 / chunkGen.chunkResolution.y)) + transform.position.z + chunkGen.seed) * 0.0002f);
+        // Adding more noise
+        y += Mathf.PerlinNoise(((x * (128 / chunkGen.chunkResolution.x)) + transform.position.x + chunkGen.seed) * 0.0007f,
+            ((z * (128 / chunkGen.chunkResolution.y)) + transform.position.z + chunkGen.seed) * 0.0008f);
+        // Minusing Noise. Multiply by 2 so it can stack up to the first 2 additions
+        y -= Mathf.PerlinNoise(((x * (128 / chunkGen.chunkResolution.x)) + transform.position.x + chunkGen.seed) * 0.000008f,
+            ((z * (128 / chunkGen.chunkResolution.y)) + transform.position.z + chunkGen.seed) * 0.000008f) * 2;
+        y = Mathf.Clamp(y, -1, 1);
         return y;
     }
 }
