@@ -4,18 +4,28 @@ using UnityEngine;
 
 public class ChunkGeneration : MonoBehaviour
 {
-    public Vector2 chunks;
-    public Vector2 chunkResolution;
+    // chunk details 
+    public Vector2 chunks; // how many x by y chunks
+    public Vector2 chunkResolution; // points in each chunk. Ex: x = 4, z = 4. Each chunk will have 16 faces (technically 25 bc the +1 to each).
+    private Vector2 chunkMiddle;
 
+    // material for the terrain
     public Material terrainMaterial;
+    // water details
+    public GameObject water; // flat plane for water
+    public float waterLevel; // y level water should be instantiated at
+    // tree details
+    public GameObject[] trees; // list of my tree prefabs
+    public float treeThreshold; // 
 
-    public GameObject water;
-    public float waterLevel;
-    public GameObject[] trees;
-    public float treeRandomness;
-    public float treeThreshold;
+    public GameObject spawner;
+    public float spawnerThreshold; // 
 
-    public Transform player;
+    public GameObject ship;
+    public bool shipSpawned = false;
+
+    public GameObject player;
+    public bool playerSpawned = false;
 
     public int chunksChunkLoaded;
 
@@ -23,10 +33,11 @@ public class ChunkGeneration : MonoBehaviour
 
     private void Start()
     {
-        seed = Random.Range(1, 10000);
+        seed = Random.Range(1, 100000);
+        chunkMiddle = new Vector2((chunks.x / 2f) * 128, (chunks.y / 2f) * 128);
         waterLevel = Mathf.PerlinNoise(seed, seed) * 15;
         StartCoroutine(GenerateChunks());
-        GameObject current = Instantiate(water, new Vector3((128 * chunks.x) / 2, waterLevel, (128 * chunks.y) / 2 ), Quaternion.identity);
+        GameObject current = Instantiate(water, new Vector3(((128 * chunks.x) / 2) - chunkMiddle.x, waterLevel, ((128 * chunks.y) / 2) - chunkMiddle.y), Quaternion.identity);
         current.transform.localScale = new Vector3(12.9f, 12.9f, 12.9f) * chunks.x;
     }
 
@@ -36,16 +47,16 @@ public class ChunkGeneration : MonoBehaviour
         {
             for (int z = 0; z < chunks.y; z++)
             {
-                GameObject current = new GameObject("Terrain" + " (" + new Vector2(x * 128, z * 128) + ")", 
+                GameObject current = new GameObject("Terrain" + " (" + new Vector2(x, z) + ")", 
                     typeof(TerrainGeneration),
                     typeof(MeshRenderer),
                     typeof(MeshFilter),
                     typeof(MeshCollider)
                     );
                 current.transform.parent = transform;
-                current.transform.position = new Vector3(x * (chunkResolution.x) * (128 / chunkResolution.x),
+                current.transform.position = new Vector3(x * (chunkResolution.x) * (128 / chunkResolution.x) - chunkMiddle.x,
                     0f,
-                    z * (chunkResolution.y) * (128 / chunkResolution.y));
+                    z * (chunkResolution.y) * (128 / chunkResolution.y) - chunkMiddle.y);
                 i++;
                 if (i == chunksChunkLoaded)
                 {

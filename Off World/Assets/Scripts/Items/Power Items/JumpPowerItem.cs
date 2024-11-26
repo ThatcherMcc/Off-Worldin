@@ -12,7 +12,7 @@ public class JumpPowerItem : MonoBehaviour, PowerItemI
 
     void Awake()
     {
-        player = GameObject.Find("Player");
+        player = GameObject.FindGameObjectWithTag("Player");
         playerMovement = player.GetComponent<PlayerMovement>();
 
     }

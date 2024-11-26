@@ -10,7 +10,7 @@ public class FrogAI : MonoBehaviour, IEnemy
     [SerializeField] private float noticeRadius;
 
     [Header("PlayerProperties")]
-    [SerializeField] private Transform player;
+    [SerializeField] public Transform player;
 
     [Header("Enemy Idle")]
     private Vector3 mainIdlePos;

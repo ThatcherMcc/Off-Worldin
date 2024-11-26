@@ -247,7 +247,7 @@ Material:
     - _RefractionModel: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
-    - _Sand_Height: 15
+    - _Sand_Height: 20
     - _Sand_Threshold: 0.1
     - _Smoothness: 0.5
     - _Smoothness0: 0.5
