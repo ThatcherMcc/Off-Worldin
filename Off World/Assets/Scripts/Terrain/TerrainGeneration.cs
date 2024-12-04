@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Cinemachine;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using UnityEditor.Experimental.GraphView;
 
 public class TerrainGeneration : MonoBehaviour
 {
@@ -15,11 +16,14 @@ public class TerrainGeneration : MonoBehaviour
     private bool canSpawnSpawner = true;
     private GameObject ship;
     private bool canSpawnShip = false;
+
+    private float landCount = 0;
+    private float waterCount = 0;
     
     Mesh mesh;
     MeshFilter meshFilter;
     MeshRenderer meshRenderer;
-    MeshCollider collider;
+    MeshCollider meshCollider;
     Vector2[] uv;
     
 
@@ -41,10 +45,8 @@ public class TerrainGeneration : MonoBehaviour
         //Debug.Log(firstNum);
         float secondNum = float.Parse(Regex.Replace(names[1], @"[^\d.]", ""));
         //Debug.Log(secondNum);
-        if (chunkGen.chunks.x / 2f - 3 < firstNum && 
-            firstNum < chunkGen.chunks.x / 2f + 3 &&
-            chunkGen.chunks.y / 2f - 3 < secondNum &&
-            secondNum < chunkGen.chunks.y / 2f + 3)
+        if (chunkGen.chunks.x / 2f - 3 < firstNum && firstNum < chunkGen.chunks.x / 2f + 3 &&
+            chunkGen.chunks.y / 2f - 3 < secondNum && secondNum < chunkGen.chunks.y / 2f + 3)
         {
             canSpawnPlayer = true;
             canSpawnShip = true;
@@ -53,11 +55,13 @@ public class TerrainGeneration : MonoBehaviour
 
         meshFilter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
-        collider = GetComponent<MeshCollider>();
+        meshCollider = GetComponent<MeshCollider>();
 
         meshRenderer.material = chunkGen.terrainMaterial;
 
         GenerateTerrain();
+        chunkGen.totalLandCount += landCount;
+        chunkGen.totalWaterCount += waterCount;
         Invoke("SetSpawnerPlayer", 6f);
     }
 
@@ -72,7 +76,13 @@ public class TerrainGeneration : MonoBehaviour
         {
             for (int z = 0; z <= chunkGen.chunkResolution.y; z++)
             {
-                float y = Noise(x, z, BiomeNoise(x, z));
+                float y = Noise(x, z, BaseNoise(x, z));
+                if (y > chunkGen.waterLevel) {
+                    landCount++;
+                }
+                else {
+                    waterCount++;
+                }
                 vertices[i] = new Vector3(x * (128 / chunkGen.chunkResolution.x),
                     y,
                     z * (128 / chunkGen.chunkResolution.y)
@@ -83,71 +93,29 @@ public class TerrainGeneration : MonoBehaviour
                 // player spawning
                 if (canSpawnPlayer && !chunkGen.playerSpawned && y > chunkGen.waterLevel + 15 && y < chunkGen.waterLevel + 40)
                 {
-                    GameObject currentPlayer = Instantiate(chunkGen.player, new Vector3(x * (128 / chunkGen.chunkResolution.x) + transform.position.x,
-                       y + transform.position.y + 1f,
-                       z * (128 / chunkGen.chunkResolution.y) + transform.position.z),
-                       Quaternion.Euler(0, Random.Range(0, 360), 0));
-
-                    CinemachineVirtualCamera virtualCam = GameObject.FindGameObjectWithTag("VirtualCamera").GetComponent<CinemachineVirtualCamera>();
-                    virtualCam.Follow = currentPlayer.transform.Find("OrientationCam").transform;
-                    currentPlayer.GetComponent<PlayerHealth>().healthbar = GameObject.FindGameObjectWithTag("UserInterface").transform.GetChild(1).GetChild(0).GetComponent<Healthbar>();
-                    chunkGen.playerSpawned = true;
-                    player = currentPlayer;
-                    chunkGen.player = currentPlayer;
+                    PlayerSpawn(x, y, z);
                     i++;
                     continue;
                     //Debug.Log("SPAWNED");
                 }
+                // ship spawning
                 if (canSpawnShip && !chunkGen.shipSpawned && chunkGen.playerSpawned && y > chunkGen.waterLevel + 15 && y < chunkGen.waterLevel + 40)
                 {
-                    GameObject currentShip = Instantiate(chunkGen.ship, new Vector3(x * (128 / chunkGen.chunkResolution.x) + transform.position.x,
-                       y + transform.position.y + 1.5f,
-                       z * (128 / chunkGen.chunkResolution.y) + transform.position.z),
-                       Quaternion.Euler(0, Random.Range(0, 360), 0));
-
-                    currentShip.transform.GetChild(0).GetChild(0).GetComponent<TeleportDoor>().player = player;
-                    currentShip.transform.GetChild(0).GetChild(1).GetComponent<TeleportDoor>().player = player;
-                    chunkGen.shipSpawned = true;
-                    ship = currentShip;
-                    chunkGen.ship = currentShip;
+                    ShipSpawn(x, y, z);
                     i++;
                     continue;
                 }
-
                 // tree spawning
                 if (doesSpawn > chunkGen.treeThreshold && y > chunkGen.waterLevel + 20)
                 {
-                    float whatSpawns = Mathf.PerlinNoise(x + transform.position.x + (chunkGen.seed * 5), z + transform.position.z + (chunkGen.seed * 3));
-                    whatSpawns = whatSpawns * chunkGen.trees.Length;
-                    whatSpawns = Mathf.RoundToInt(whatSpawns);
-
-                    float offset = Random.Range(-2f, 2f);
-                    offset = offset / 2;
-
-                    int whatTree = Random.Range(0, 2);
-
-                    GameObject current = Instantiate(chunkGen.trees[whatTree], new Vector3(x * (128 / chunkGen.chunkResolution.x) + transform.position.x + offset,
-                       y + transform.position.y - 0.85f,
-                       z * (128 / chunkGen.chunkResolution.y) + transform.position.z + offset),
-                       Quaternion.Euler(0, Random.Range(0, 360), 0));
-
-                    current.transform.parent = transform;
+                    TreeSpawn(x, y, z);
                 }
-
+                // spawner spawning w/ added noise
                 doesSpawn += Mathf.PerlinNoise((x + transform.position.x) * 0.03f + chunkGen.seed, (z + transform.position.z) * 0.03f + chunkGen.seed) * 0.35f;
-                // spawner spawning
                 if (canSpawnSpawner && doesSpawn > chunkGen.spawnerThreshold && y < chunkGen.waterLevel + 10 && y > chunkGen.waterLevel)
                 {
-                    GameObject current = Instantiate(spawner, new Vector3(x * (128 / chunkGen.chunkResolution.x) + transform.position.x,
-                       y + transform.position.y + 1f,
-                       z * (128 / chunkGen.chunkResolution.y) + transform.position.z),
-                       Quaternion.identity);
-                    current.transform.parent = transform;
-
-                    spawner = current;
-                    canSpawnSpawner = false;
-
-                    Debug.Log("Spawner made and added");
+                    SpawnerSpawn(x, y, z);
+                    //Debug.Log("Spawner made and added");
                 }
                 i++;
             }
@@ -189,63 +157,130 @@ public class TerrainGeneration : MonoBehaviour
         mesh.triangles = mesh.triangles.Reverse().ToArray();
         meshFilter.mesh = mesh;
         mesh.RecalculateNormals();
-        collider.sharedMesh = mesh;
+        meshCollider.sharedMesh = mesh;
     }
 
-    private bool ValidateSeed()
-    {
-        int landCount = 0;
-        int waterCount = 0;
-
-        // Test the terrain across a sample grid
-        for (int x = 0; x < chunkGen.chunkResolution.x; x += 10) // Sample every 10 units for efficiency
-        {
-            for (int z = 0; z < chunkGen.chunkResolution.y; z += 10)
-            {
-                float y = Noise(x, z, BiomeNoise(x, z));
-                if (y > chunkGen.waterLevel) landCount++;
-                else waterCount++;
-            }
-        }
-
-        float landRatio = (float)landCount / (landCount + waterCount);
-        Debug.Log($"Land ratio for seed {chunkGen.seed}: {landRatio}");
-
-        // Return true if enough land is available
-        return landRatio >= 0.5f; // Adjust this threshold as needed
-    }
-
-    float Noise(float x, float z, float biomeNoise)
+    float Noise(float x, float z, float baseNoise)
     {
         Vector2 noiseVector = new Vector2((x * (128 / chunkGen.chunkResolution.x)) + transform.position.x + chunkGen.seed,
             (z * (128 / chunkGen.chunkResolution.y)) + transform.position.z + chunkGen.seed);
         // Base Plate of Noise
-        float y = biomeNoise * 60f;
+        float y = baseNoise * 100f;
 
         // Mountains
-        float multiplier = 1 + Mathf.Pow(biomeNoise, 10f) * 1.2f;
+        float multiplier = 1 + Mathf.Pow(baseNoise, 5f) * 1.4f;
         y *= multiplier;
-        y += (Mathf.PerlinNoise(noiseVector.x * 0.0002f, noiseVector.y * 0.0002f) * 55) * biomeNoise;
+
+        //y += (Mathf.PerlinNoise(noiseVector.x * 0.001f, noiseVector.y * 0.001f) * 10) * BaseNoise;
         // Hills
-        y -= (Mathf.PerlinNoise(noiseVector.x * 0.01f, noiseVector.y * 0.01f) * 25) * biomeNoise;
-        y -= (Mathf.PerlinNoise(noiseVector.x * 0.00016f, noiseVector.y * 0.00016f) * 60) * biomeNoise;
+        y -= (Mathf.PerlinNoise(noiseVector.x * 0.003f, noiseVector.y * 0.003f) * 5) * baseNoise;
 
         return y;
     }
 
-    float BiomeNoise(float x, float z)
+    float BaseNoise(float x, float z)
     {
         Vector2 noiseVector = new Vector2((x * (128 / chunkGen.chunkResolution.x)) + transform.position.x + chunkGen.seed,
             (z * (128 / chunkGen.chunkResolution.y)) + transform.position.z + chunkGen.seed);
+        float continentalness = Continentalness(noiseVector);
+        float peaksandvalleys = PeaksAndValleys(noiseVector);
+        float erosion = Erosion(noiseVector);
         // Base Plate of Noise. Quite Spread out but not too much
-        float y = Mathf.PerlinNoise(noiseVector.x * 0.0016f, noiseVector.y * 0.0016f);
+        float y = continentalness;
+        y += peaksandvalleys;
+        y -= erosion * 1.2f;
+
         // Adding more noise
-        y += Mathf.PerlinNoise(noiseVector.x * 0.0003f, noiseVector.y * 0.0003f);
+        //y += Mathf.PerlinNoise(noiseVector.x * 0.0015f, noiseVector.y * 0.0015f) * 1f;
         // Minusing Noise (Water). Multiply by 2 so it can stack up to the first 2 additions
-        y -= Mathf.PerlinNoise(noiseVector.x * 0.0018f, noiseVector.y * 0.0018f) * 1.9f;
-        y = Mathf.Clamp(y, -1, 1);
+        //y -= Mathf.PerlinNoise(noiseVector.x * 0.0009f, noiseVector.y * 0.0009f) * 1.5f;
+        //y -= Mathf.PerlinNoise(noiseVector.x * 0.004f, noiseVector.y * 0.004f) * 0.5f;
+        y = SmoothClamp(y, 1f);
         return y;
         //26213
+        //811283
+    }
+    float Continentalness(Vector2 noiseVector)
+    {
+        float y = Mathf.PerlinNoise(noiseVector.x * 0.0005f, noiseVector.y * 0.0005f);
+        return SmoothClamp(y, 1);
+    }
+
+    float PeaksAndValleys(Vector2 noiseVector)
+    {
+        return Mathf.PerlinNoise(noiseVector.x * 0.003f, noiseVector.y * 0.003f);
+    }
+
+    float Erosion(Vector2 noiseVector)
+    {
+        return Mathf.PerlinNoise(noiseVector.x * 0.001f, noiseVector.y * 0.001f);
+    }
+
+    float SmoothClamp(float value, float threshold)
+    {
+        if (value <= threshold)
+        {
+            return value;
+        }
+        float excess = value - threshold;
+        return threshold + Mathf.Log(1 + excess);
+        //return threshold + (excess / (1 + excess));
+    }
+
+    private void PlayerSpawn(float x, float y, float z)
+    {
+        GameObject currentPlayer = Instantiate(player, new Vector3(x * (128 / chunkGen.chunkResolution.x) + transform.position.x,
+                       y + transform.position.y + 5f,
+                       z * (128 / chunkGen.chunkResolution.y) + transform.position.z),
+                       Quaternion.Euler(0, Random.Range(0, 360), 0));
+
+        Transform orientation = currentPlayer.transform.Find("OrientationCam").transform;
+        CinemachineVirtualCamera virtualCam = GameObject.FindGameObjectWithTag("VirtualCamera").GetComponent<CinemachineVirtualCamera>();
+        virtualCam.Follow = orientation;
+        currentPlayer.GetComponent<PlayerHealth>().healthbar = GameObject.FindGameObjectWithTag("UserInterface").transform.GetChild(1).GetChild(0).GetComponent<Healthbar>();
+        chunkGen.playerSpawned = true;
+        chunkGen.currentPlayer = currentPlayer;
+    }
+    private void ShipSpawn(float x, float y, float z)
+    {
+        GameObject currentShip = Instantiate(ship, new Vector3(x * (128 / chunkGen.chunkResolution.x) + transform.position.x,
+                       y + transform.position.y + 5f,
+                       z * (128 / chunkGen.chunkResolution.y) + transform.position.z),
+                       Quaternion.Euler(0, Random.Range(0, 360), 0));
+
+        currentShip.transform.GetChild(0).GetChild(0).GetComponent<TeleportDoor>().player = player;
+        currentShip.transform.GetChild(0).GetChild(1).GetComponent<TeleportDoor>().player = player;
+        chunkGen.shipSpawned = true;
+        chunkGen.currentShip = currentShip;
+    }
+    private void TreeSpawn(float x, float y, float z)
+    {
+        float whatSpawns = Mathf.PerlinNoise(x + transform.position.x + (chunkGen.seed * 5), z + transform.position.z + (chunkGen.seed * 3));
+        whatSpawns = whatSpawns * chunkGen.trees.Length;
+        whatSpawns = Mathf.RoundToInt(whatSpawns);
+
+        float offset = Random.Range(-2f, 2f);
+        offset = offset / 2;
+
+        int whatTree = Random.Range(0, 2);
+
+        GameObject current = Instantiate(chunkGen.trees[whatTree], new Vector3(x * (128 / chunkGen.chunkResolution.x) + transform.position.x + offset,
+           y + transform.position.y - 0.85f,
+           z * (128 / chunkGen.chunkResolution.y) + transform.position.z + offset),
+           Quaternion.Euler(0, Random.Range(0, 360), 0));
+
+        current.transform.parent = transform;
+    }
+    private void SpawnerSpawn(float x, float y, float z)
+    {
+        GameObject current = Instantiate(spawner, new Vector3(x * (128 / chunkGen.chunkResolution.x) + transform.position.x,
+                       y + transform.position.y + 1f,
+                       z * (128 / chunkGen.chunkResolution.y) + transform.position.z),
+                       Quaternion.identity);
+        current.transform.parent = transform;
+
+        spawner = current;
+        canSpawnSpawner = false;
     }
 
     private void SetSpawnerPlayer()
@@ -253,8 +288,7 @@ public class TerrainGeneration : MonoBehaviour
         if (player != null)
         {
             Debug.Log("terrain player Not null");
-            player = chunkGen.player;
-            spawner.GetComponent<Spawner>().player = player;
+            spawner.GetComponent<Spawner>().player = chunkGen.currentPlayer;
             Debug.Log(spawner.name + " Spawner assigned??");
             
         }
@@ -263,10 +297,10 @@ public class TerrainGeneration : MonoBehaviour
     Vector3 GetTerrainNormal(int x, int z)
     {
         // Get the neighboring vertices to calculate the slope
-        float yL = Noise(x - 4, z, BiomeNoise(x - 4, z));
-        float yR = Noise(x + 4, z, BiomeNoise(x + 4, z));
-        float yD = Noise(x, z - 4, BiomeNoise(x, z - 4));
-        float yU = Noise(x, z + 4, BiomeNoise(x, z + 4));
+        float yL = Noise(x - 4, z, BaseNoise(x - 4, z));
+        float yR = Noise(x + 4, z, BaseNoise(x + 4, z));
+        float yD = Noise(x, z - 4, BaseNoise(x, z - 4));
+        float yU = Noise(x, z + 4, BaseNoise(x, z + 4));
 
         // Calculate vectors from the neighbors
         Vector3 leftRight = new Vector3(2, yR - yL, 0);  // Left to Right vector

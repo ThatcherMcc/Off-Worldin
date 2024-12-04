@@ -28,7 +28,7 @@ public class Spawner : MonoBehaviour
     void Start()
     {
         mob = GetMobByType(mobType);
-        Debug.Log(mob);
+        //Debug.Log(mob);
     }
 
     private void Update()
@@ -38,7 +38,7 @@ public class Spawner : MonoBehaviour
             float distance = Vector3.Distance(player.transform.position, transform.position);
             if (!spawned && distance < distanceToSpawn && count >= 10)
             {
-                Spawn();
+                SpawnMob();
             } else if (distance > distanceToSpawn + 20 && spawned)
             {
                 ClearMobs();
@@ -63,7 +63,7 @@ public class Spawner : MonoBehaviour
         }
     }
 
-    private void Spawn()
+    private void SpawnMob()
     { 
         spawned = true;
         count = 0;

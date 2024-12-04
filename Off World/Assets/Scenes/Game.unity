@@ -412,8 +412,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 531777148}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.59943694, y: 0.23453905, z: 0.18962337, w: 0.7414242}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -276.8242, y: 5.0400004, z: -310.79544}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -676,8 +676,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd6043bde05a7fc4cba197d06915c1e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Damping: {x: 0.1, y: 0.5, z: 0.3}
-  ShoulderOffset: {x: 0.5, y: -0.4, z: 0}
+  Damping: {x: 0, y: 0, z: 0}
+  ShoulderOffset: {x: 0, y: -0.3, z: 0}
   VerticalArmLength: 0.4
   CameraSide: 0.5
   CameraDistance: 6
@@ -1340,7 +1340,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chunks: {x: 22, y: 22}
-  chunkResolution: {x: 21, y: 21}
+  chunkResolution: {x: 31, y: 31}
   terrainMaterial: {fileID: 2100000, guid: 52e842eff2cc9214099ccfa4c1d96f06, type: 2}
   water: {fileID: 5533806730770900681, guid: 17bbee51ca9f36648a91884e304ff15a, type: 3}
   waterLevel: 0
@@ -1349,13 +1349,19 @@ MonoBehaviour:
   - {fileID: 4237041096923799916, guid: b0b091acdd20ab74295a99e3aee6e2da, type: 3}
   treeThreshold: 0.35
   spawner: {fileID: 2723773873615603342, guid: 9ac6499866d140e4ca1c3a89592fb66d, type: 3}
-  spawnerThreshold: 0.55
+  spawnerThreshold: 0.6
   ship: {fileID: 6258746052015382169, guid: 41c27144cc7d14145839cfad547f0253, type: 3}
+  currentShip: {fileID: 0}
   shipSpawned: 0
   player: {fileID: 8562158499396700989, guid: 54311a6515dc0234c9d2e82ce7a7186b, type: 3}
+  currentPlayer: {fileID: 0}
   playerSpawned: 0
   chunksChunkLoaded: 16
-  seed: 23456
+  landThreshold: 0.6
+  totalLandCount: 0
+  totalWaterCount: 0
+  seed: 14210
+  useRandomSeed: 1
 --- !u!4 &1774944626 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 194253244129063148, guid: 2de6b2f9f8199494386ed6aead60a228, type: 3}

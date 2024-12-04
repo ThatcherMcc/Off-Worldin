@@ -10,6 +10,8 @@ public class ThirdPersonCam : MonoBehaviour
     public Transform playerObj;
     public Rigidbody rb;
 
+    float xRotation;
+    float yRotation;
     public float rotationSpeed;
 
     private void Start()
@@ -22,9 +24,10 @@ public class ThirdPersonCam : MonoBehaviour
         Vector3 viewDirection = player.position - new Vector3(transform.position.x, player.position.y, transform.position.z);
         orientation.forward = viewDirection.normalized;
 
-        float horizontalInput = Input.GetAxis("Horizontal");
-        float verticalInput = Input.GetAxis("Vertical");
-        Vector3 inputDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+        float mouseX = Input.GetAxisRaw("Mouse X");
+        float mouseY = Input.GetAxisRaw("Mouse Y");
+
+        Vector3 inputDirection = orientation.forward * mouseY + orientation.right * mouseX;
 
         if (inputDirection != Vector3.zero)
         {
