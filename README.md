@@ -1,3 +1,9 @@
-# Off-Worldin
+# "Off World"
 
-Space 3D game where you take the creatures and use them for a physical gain
+### Quick Demo
+[1 Min Demo Link](https://www.youtube.com/watch?v=I9-k-yx-beE&ab_channel=YeetleBandeetle)
+
+### Prompt
+Space exploration game where you integrate alien anatomy into the play character
+
+
