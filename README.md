@@ -11,6 +11,6 @@ Space exploration game where you integrate alien anatomy into the play character
 
 ### Navigation
 
-You can find everything useful in Off World/Assets/
+You can find everything useful in Off World/Assets/ \n
 Such as Scripts, and Models
 
