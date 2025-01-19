@@ -8,7 +8,7 @@ For now, this repo still requires some cleaning because there are a lot of unuse
 ### Quick Demo
 [1 Min Demo Link on YouTube](https://www.youtube.com/watch?v=I9-k-yx-beE&ab_channel=YeetleBandeetle)
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/I9-k-yx-beE/1.jpg)](https://www.youtube.com/watch?v=I9-k-yx-beE)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/I9-k-yx-beE/maxresdefault.jpg)](https://www.youtube.com/watch?v=I9-k-yx-beE)
 
 ### Navigation
 You can find everything useful in: Off World/Assets/ 
