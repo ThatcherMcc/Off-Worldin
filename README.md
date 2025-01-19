@@ -1,6 +1,6 @@
 # "Off World"
 ### Intro
-Space exploration game where you integrate alien anatomy into the player character. Looking to create something where you have to capture weaker aliens to make it easier to catch medium threats and so on.
+Space exploration game where you integrate alien anatomy into the player character. Looking to create something where you have to capture weaker aliens to make it easier to catch medium threats and so on. With bosses being the highest level threat and best abilities.
 
 ### Quick Demo
 [1 Min Demo Link on YouTube](https://www.youtube.com/watch?v=I9-k-yx-beE&ab_channel=YeetleBandeetle)
