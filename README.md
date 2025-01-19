@@ -1,7 +1,10 @@
 # "Off World"
 
 ### Quick Demo
-[1 Min Demo Link](https://www.youtube.com/watch?v=I9-k-yx-beE&ab_channel=YeetleBandeetle)
+[1 Min Demo Link on YouTube](https://www.youtube.com/watch?v=I9-k-yx-beE&ab_channel=YeetleBandeetle)
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/I9-k-yx-beE/0.jpg)](https://www.youtube.com/watch?v=I9-k-yx-beE)
+
 
 ### Prompt
 Space exploration game where you integrate alien anatomy into the play character
