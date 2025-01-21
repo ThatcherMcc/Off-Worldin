@@ -45,7 +45,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mobs:
-  - {fileID: 3603206467909369630, guid: 8047b19718eb4764fbb02072f89699eb, type: 3}
+  - {fileID: 4628941456387592699, guid: 8b5a9dae199b5ef4ebea173cfaeb94ba, type: 3}
   - {fileID: 1713142351472579361, guid: 7d14f333ae51f7d48be9107f2660ba27, type: 3}
   player: {fileID: 0}
+  waterLevel: 0
   mobType: 0

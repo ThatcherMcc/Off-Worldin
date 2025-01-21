@@ -6,28 +6,23 @@ using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
-    public GameObject[] mobs;
-    private GameObject mob;
-    private int numMobs;
-    private List<GameObject> mobsSpawned = new List<GameObject>();
-    private float count = 0;
+    public GameObject[] mobs; // list of mob prefabs it pulls from
+    private GameObject mob; // current mob in spawner
+    private int numMobs; // number of mobs to spawn, usually 1
+    private float count = 0; // counter used to wait a few seconds before spawning
 
-    public GameObject player;
-    private float distanceToSpawn = 200;
-    private bool spawned = false;
+    public GameObject player; // player character
+    private float distanceToSpawn = 300; // how large the dist between player and spawner needs to be to spawn
+    private bool spawned = false; // is current mob spawned
 
+    public float waterLevel;
     public MobType mobType;
-    public enum MobType
-    {
-        Frog,
-        Wolf
-    }
 
 
     // Start is called before the first frame update
     void Start()
     {
-        mob = GetMobByType(mobType);
+        mob = GetMobByType();
         //Debug.Log(mob);
     }
 
@@ -41,63 +36,77 @@ public class Spawner : MonoBehaviour
                 SpawnMob();
             } else if (distance > distanceToSpawn + 20 && spawned)
             {
-                ClearMobs();
+                ClearMob();
             }
             count += Time.deltaTime;
         }
         
     }
 
-    private GameObject GetMobByType(MobType type)
+    private GameObject GetMobByType()
     {
-        switch (type)
+        float y = transform.position.y;
+        if (y < waterLevel + 11 && y > waterLevel + 1)
         {
-            case MobType.Frog:
-                numMobs = 1;
-                return mobs.Length > 0 ? mobs[0] : null;
-            case MobType.Wolf:
-                numMobs = 1;
-                return mobs.Length > 0 ? mobs[1] : null;
-            default: 
-                return null;
+            numMobs = 1;
+            mobType = MobType.Frog;
+            return mobs.Length > 0 ? mobs[0] : null;
+        }
+        else if (y < waterLevel + 121 && y > waterLevel + 51)
+        {
+            numMobs = 1;
+            mobType = MobType.Wolf;
+            return mobs.Length > 1 ? mobs[1] : null;
+        }
+        else
+        {
+            mobType = MobType.Null;
+            return null;
         }
     }
 
     private void SpawnMob()
     { 
         spawned = true;
-        count = 0;
-        for (int i = 0; i < numMobs; i++) 
+        GameObject current = Instantiate(mob, transform.position, Quaternion.identity);
+        if (current.TryGetComponent<IEnemy>(out var currmob))
         {
-            float angle = Random.Range(0, 360);
-            Vector3 randomDirection = new Vector3(Mathf.Cos(angle),0 , Mathf.Sin(angle)).normalized;
-            GameObject current = Instantiate(mob, transform.position + (randomDirection * Random.Range(0, 5)), Quaternion.identity);
-            current.GetComponent<FrogAI>().player = player.transform;
-            mobsSpawned.Add(current);
-            //Debug.Log("Spawning Mobs");
+            currmob.player = player.transform;
         }
-        //Debug.Log("Spawned = True");
     }
 
-    private void ClearMobs()
+    private void ClearMob()
     {
-        foreach (GameObject mob in mobsSpawned)
+        if (mob != null)
         {
-            if (mob != null)
-            {
-                Destroy(mob);
-            }
+            Destroy(mob);
         }
-        mobsSpawned.Clear();
         spawned = false;
     }
 
-   
+    public enum MobType
+    {
+        Frog,
+        Wolf,
+        Null
+    }
+
+
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(transform.position, distanceToSpawn);
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, distanceToSpawn + 20);
+        if (mobType == MobType.Frog)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(transform.position, distanceToSpawn);
+        } else if (mobType == MobType.Wolf)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(transform.position, distanceToSpawn);
+        } else
+        {
+            Gizmos.color = Color.black;
+            Gizmos.DrawWireSphere(transform.position, distanceToSpawn);
+        }
+        
     }
 }

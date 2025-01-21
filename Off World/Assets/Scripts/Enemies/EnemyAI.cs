@@ -10,13 +10,11 @@ public class EnemyAI : MonoBehaviour, IEnemy
     [Header("LOS")]
     [SerializeField] private float noticeRadius;
     private bool chasing;
-    private float chaseTimer = 5;
-
-    [Header("PlayerProperties")]
-    [SerializeField] private Transform player;
+    private float chaseTimer;
+    public Transform player { get; set; }
     private NavMeshAgent agent;
 
-    [Header("Enemy Idle")]
+    [Header("Idle")]
     private Vector3 mainIdlePos;
     private float moveDuration;
     [SerializeField] private float maxWanderDist;
@@ -28,7 +26,7 @@ public class EnemyAI : MonoBehaviour, IEnemy
     public float enemySpeed;
 
     private bool returningToStart;
-
+    [Header("Movement State")]
     public MovementState state;
 
     public enum MovementState
@@ -53,7 +51,7 @@ public class EnemyAI : MonoBehaviour, IEnemy
         agent = GetComponent<NavMeshAgent>();
         rb = GetComponent<Rigidbody>();
         mainIdlePos = transform.position;
-        idleSpeed = enemySpeed / 4;
+        idleSpeed = enemySpeed / 2;
         minWanderDist = maxWanderDist / 3;
     }
 
@@ -63,15 +61,16 @@ public class EnemyAI : MonoBehaviour, IEnemy
         if (aiEnabled)
         {
             if (InLineOfSight() || chasing)
-            {
-                agent.enabled = true;
+            {               
                 RunToPlayer();
+                // sets a timer to continue following for a second without LOS
                 if (chaseTimer <= 0)
                 {
                     chasing = false;
+                } else
+                {
+                    chaseTimer -= Time.deltaTime;
                 }
-                chaseTimer -= Time.deltaTime;
-                state = MovementState.attacking;
             }
             else
             {
@@ -96,7 +95,7 @@ public class EnemyAI : MonoBehaviour, IEnemy
             if (hit.transform.gameObject.CompareTag("Player"))
             {
                 chasing = true;
-                chaseTimer = 1;
+                chaseTimer = 2;
                 return true;
             }
         }
@@ -105,14 +104,16 @@ public class EnemyAI : MonoBehaviour, IEnemy
 
     private void RunToPlayer()
     {
-        agent.SetDestination(player.position);
         agent.speed = enemySpeed;
+        agent.SetDestination(player.position);
+        state = MovementState.attacking;
     }
 
     private void Idle()
     {
-        isReturning();
         agent.speed = idleSpeed;
+
+        isReturning();
         if (!returningToStart)
         {
             IdleWander();
@@ -159,29 +160,27 @@ public class EnemyAI : MonoBehaviour, IEnemy
             else
             {
                 Move(idleDirection);
-
-                Debug.Log(moveDuration);
-
+                // Debug.Log(moveDuration);
                 idleMovingTimer -= Time.deltaTime;
             }
 
         } else
         {
-            agent.speed = 0;
-            Debug.Log("Break tIme");
+            agent.speed = idleSpeed;
+            // Debug.Log("Break tIme");
             idleBreakTimer -= Time.deltaTime;
         }
     }
 
     private void GetIdleDirection()
     {
-        float angle = Random.Range(0f, 360f);
+        float angle = Random.Range(0f, 2f * Mathf.PI);
         Vector3 randomDirection = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)).normalized;
 
         float moveDistance = idleSpeed * moveDuration;
 
         idleDirection = transform.position + (randomDirection * moveDistance);
-        Debug.Log(idleDirection);
+        //  Debug.Log(idleDirection);
     }
 
     private void Move(Vector3 direction)

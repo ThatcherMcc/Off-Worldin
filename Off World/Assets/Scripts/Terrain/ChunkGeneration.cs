@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.AI.Navigation;
 using UnityEngine;
 
 public class ChunkGeneration : MonoBehaviour
@@ -26,6 +27,9 @@ public class ChunkGeneration : MonoBehaviour
     public GameObject ship;
     public GameObject currentShip;
     public bool shipSpawned = false;
+    // mob thresholds
+    public float frogSpawnerThreshold;
+    public float wolfSpawnerThreshold;
 
     public GameObject player;
     public GameObject currentPlayer;
@@ -33,7 +37,10 @@ public class ChunkGeneration : MonoBehaviour
 
     public int chunksChunkLoaded;
 
-    public float landThreshold;
+    public NavMeshSurface[] navMeshes;
+
+    public float landThresholdMin;
+    public float landThresholdMax;
     public float totalLandCount = 0;
     public float totalWaterCount = 0;
 
@@ -42,6 +49,7 @@ public class ChunkGeneration : MonoBehaviour
 
     private void Start()
     {
+        navMeshes = GetComponents<NavMeshSurface>();
         StartCoroutine(GenerateAndValidateChunks());
     }
 
@@ -64,7 +72,7 @@ public class ChunkGeneration : MonoBehaviour
             float landRatio = totalLandCount / (totalLandCount + totalWaterCount);
 
 
-            if (landRatio >= landThreshold)
+            if (landRatio >= landThresholdMin && landRatio <= landThresholdMax)
             {
                 goodSeed = true;
                 Debug.Log("Valid seed found!");
@@ -84,6 +92,14 @@ public class ChunkGeneration : MonoBehaviour
             Quaternion.identity
             );
         current.transform.localScale = new Vector3(12.9f, 12.9f, 12.9f) * chunks.x;
+
+        foreach (NavMeshSurface navMesh in navMeshes)
+        {
+            if (navMesh != null)
+            {
+                navMesh.BuildNavMesh();
+            }
+        }
     }
 
     public IEnumerator GenerateChunks()

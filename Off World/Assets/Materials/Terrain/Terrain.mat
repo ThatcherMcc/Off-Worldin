@@ -248,7 +248,7 @@ Material:
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
     - _Sand_Height: 13
-    - _Sand_Threshold: 0.1
+    - _Sand_Threshold: 0.4
     - _Smoothness: 0.5
     - _Smoothness0: 0.5
     - _Smoothness1: 0.5
@@ -290,12 +290,15 @@ Material:
     - Fade_Color: {r: 0, g: 0, b: 0, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _CliffRock: {r: 0.4339623, g: 0.4339623, b: 0.4339623, a: 0}
+    - _CliffRockColor: {r: 0.37254903, g: 0.28235295, b: 0.25882354, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _Diffusion_Profile_Asset: {r: 0, g: 0, b: 0, a: 0}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Grass: {r: 0.4452207, g: 0.8207547, b: 0.47467446, a: 0}
+    - _GrassColor: {r: 0.15873085, g: 0.7430871, b: 0.8207547, a: 1}
     - _Sand: {r: 1, g: 0.95143926, b: 0.6556604, a: 0}
+    - _SandColor: {r: 1, g: 0.8630529, b: 0.6367924, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _Subsurface_Scattering_Color: {r: 1, g: 1, b: 1, a: 0}
     - _Thickness_Remap: {r: 0, g: 1, b: 0, a: 0}

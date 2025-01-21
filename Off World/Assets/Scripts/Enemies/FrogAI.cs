@@ -2,15 +2,19 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using TMPro;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.AI;
+using UnityEngine.UIElements.Experimental;
 
 public class FrogAI : MonoBehaviour, IEnemy
 {
     [Header("LOS")]
     [SerializeField] private float noticeRadius;
+    private bool running;
+    private float runningTimer;
 
-    [Header("PlayerProperties")]
-    [SerializeField] public Transform player;
+    public Transform player { get; set; }
 
     [Header("Enemy Idle")]
     private Vector3 mainIdlePos;
@@ -43,6 +47,7 @@ public class FrogAI : MonoBehaviour, IEnemy
     // Start is called before the first frame update
     void Awake()
     {
+        player = GameObject.FindGameObjectWithTag("Player").transform;
         rb = GetComponent<Rigidbody>();
         mainIdlePos = transform.position;
         idleSpeed = enemySpeed / 2;
@@ -57,6 +62,15 @@ public class FrogAI : MonoBehaviour, IEnemy
             if (InLineOfSight())
             {
                 RunFromPlayer();
+                // sets a timer to continue following for a second without LOS
+                if (runningTimer <= 0)
+                {
+                    running = false;
+                }
+                else
+                {
+                    runningTimer -= Time.deltaTime;
+                }
             }
             else
             {
@@ -80,6 +94,8 @@ public class FrogAI : MonoBehaviour, IEnemy
         {
             if (hit.transform.gameObject.CompareTag("Player"))
             {
+                running = true;
+                runningTimer = 2;
                 return true;
             }
         }
@@ -88,24 +104,25 @@ public class FrogAI : MonoBehaviour, IEnemy
 
     private void RunFromPlayer()
     {
+        Debug.Log("Running");
         Vector3 direction = (transform.position - player.position).normalized;
-        float newSpeed = enemySpeed * 1.5f;
+
         if (runHopTimer <= 0)
         {
-            rb.MovePosition(transform.position + direction * newSpeed * Time.deltaTime);
+            Move(direction, enemySpeed);
             Hop(direction);
             runHopTimer = 1;
         }
-        runHopTimer -= Time.deltaTime;
-
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, enemySpeed * Time.deltaTime);
+        else
+        {
+            runHopTimer -= Time.deltaTime;
+        }
+        RotateMob(direction);
     }
 
     private void Idle()
     {
         isReturning();
-
         if (!returningToStart)
         {
             IdleWander();
@@ -114,7 +131,6 @@ public class FrogAI : MonoBehaviour, IEnemy
         {
             ReturnToStart();
         }
-
     }
 
     private void isReturning()
@@ -134,17 +150,15 @@ public class FrogAI : MonoBehaviour, IEnemy
         Vector3 direction = (mainIdlePos - transform.position).normalized;
         if (idleBreakTimer <= 0)
         {
-            rb.MovePosition(transform.position + direction * idleSpeed * Time.deltaTime);
+            Move(direction, idleSpeed);
             Hop(direction);
-            idleBreakTimer = 3;
+            idleBreakTimer = 2.5f;
         }
         else
         {
             idleBreakTimer -= Time.deltaTime;
         }
-
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, enemySpeed * Time.deltaTime);
+        RotateMob(direction);
     }
 
     private void IdleWander()
@@ -152,36 +166,51 @@ public class FrogAI : MonoBehaviour, IEnemy
         // Not resting or currently moving? Try moving!
         if (idleBreakTimer <= 0)
         {
-            // Not moving? Get a new direction to move
+            // Timer to make sure hes grounded before jumping
             if (idleMovingTimer <= 0)
             {
-                idleMovingTimer = moveDuration;
                 GetIdleDirection();
+                idleMovingTimer = moveDuration;
             }
             else
             {
-                rb.MovePosition(transform.position + idleDirection * idleSpeed * Time.deltaTime);
+                Move(idleDirection, idleSpeed);
                 Hop(idleDirection);
-                idleBreakTimer = Random.Range(4, 12);
+                Debug.Log("IDLE");
+                idleBreakTimer = 3;
+                
             }
+        } else
+        {
+            RotateMob(idleDirection);
+            idleBreakTimer -= Time.deltaTime;
+            idleMovingTimer -= Time.deltaTime;
         }
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(idleDirection.x, 0, idleDirection.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, enemySpeed * Time.deltaTime);
-        idleMovingTimer -= Time.deltaTime;
-        idleBreakTimer -= Time.deltaTime;
+        
     }
 
     private void GetIdleDirection()
     {
-        float angle = Random.Range(0f, 360f);
+        float angle = Random.Range(0f, 360);
         Vector3 randomDirection = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)).normalized;
-        Vector3 targetPosition = transform.position + randomDirection * enemySpeed * idleMovingTimer;
 
         idleDirection = randomDirection;
     }
 
+    private void Move(Vector3 direction, float newSpeed)
+    {
+        rb.MovePosition(transform.position + direction * newSpeed * Time.deltaTime);
+    }
+
+    private void RotateMob(Vector3 direction)
+    {
+        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, enemySpeed * Time.deltaTime);
+    }
+
     private void Hop(Vector3 direction)
     {
-        rb.AddForce(new Vector3(direction.x, 1, direction.z) * jumpForce, ForceMode.Impulse);
+        rb.AddForce(new Vector3(direction.x * .5f, 1, direction.z * .5f) * jumpForce, ForceMode.Impulse);
+        Debug.Log("JUMPING");
     }
 }

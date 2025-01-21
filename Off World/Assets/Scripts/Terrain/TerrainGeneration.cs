@@ -16,6 +16,7 @@ public class TerrainGeneration : MonoBehaviour
     private bool canSpawnSpawner = true;
     private GameObject ship;
     private bool canSpawnShip = false;
+    private float waterLevel;
 
     private float landCount = 0;
     private float waterCount = 0;
@@ -37,6 +38,7 @@ public class TerrainGeneration : MonoBehaviour
         spawner = chunkGen.spawner;
         player = chunkGen.player;
         ship = chunkGen.ship;
+        waterLevel = chunkGen.waterLevel;
         
 
         string name = transform.gameObject.name;
@@ -68,7 +70,9 @@ public class TerrainGeneration : MonoBehaviour
     void GenerateTerrain()
     {
         mesh = new Mesh();
+        // each specific point in this chunk
         Vector3[] vertices = new Vector3[(int)((chunkGen.chunkResolution.x + 1) * (chunkGen.chunkResolution.y + 1))];
+        // 
         uv = new Vector2[vertices.Length];
         int[] triangles;
 
@@ -77,7 +81,7 @@ public class TerrainGeneration : MonoBehaviour
             for (int z = 0; z <= chunkGen.chunkResolution.y; z++)
             {
                 float y = Noise(x, z, BaseNoise(x, z));
-                if (y > chunkGen.waterLevel) {
+                if (y > waterLevel) {
                     landCount++;
                 }
                 else {
@@ -91,7 +95,7 @@ public class TerrainGeneration : MonoBehaviour
                 doesSpawn -= Mathf.PerlinNoise((x + transform.position.x) * 0.5f + chunkGen.seed, (z + transform.position.z) * 0.5f + chunkGen.seed);
                 
                 // player spawning
-                if (canSpawnPlayer && !chunkGen.playerSpawned && y > chunkGen.waterLevel + 15 && y < chunkGen.waterLevel + 40)
+                if (canSpawnPlayer && !chunkGen.playerSpawned && y > waterLevel + 15 && y < waterLevel + 40)
                 {
                     PlayerSpawn(x, y, z);
                     i++;
@@ -99,23 +103,29 @@ public class TerrainGeneration : MonoBehaviour
                     //Debug.Log("SPAWNED");
                 }
                 // ship spawning
-                if (canSpawnShip && !chunkGen.shipSpawned && chunkGen.playerSpawned && y > chunkGen.waterLevel + 15 && y < chunkGen.waterLevel + 40)
+                if (canSpawnShip && !chunkGen.shipSpawned && chunkGen.playerSpawned && y > waterLevel + 15 && y < waterLevel + 40)
                 {
                     ShipSpawn(x, y, z);
                     i++;
                     continue;
                 }
                 // tree spawning
-                if (doesSpawn > chunkGen.treeThreshold && y > chunkGen.waterLevel + 20)
+                if (doesSpawn > chunkGen.treeThreshold && y > waterLevel + 20)
                 {
                     TreeSpawn(x, y, z);
                 }
                 // spawner spawning w/ added noise
                 doesSpawn += Mathf.PerlinNoise((x + transform.position.x) * 0.03f + chunkGen.seed, (z + transform.position.z) * 0.03f + chunkGen.seed) * 0.35f;
-                if (canSpawnSpawner && doesSpawn > chunkGen.spawnerThreshold && y < chunkGen.waterLevel + 10 && y > chunkGen.waterLevel)
+                // frog spawning
+                if (canSpawnSpawner && doesSpawn > chunkGen.frogSpawnerThreshold && y < waterLevel + 10 && y > waterLevel)
                 {
                     SpawnerSpawn(x, y, z);
                     //Debug.Log("Spawner made and added");
+                }
+                // wolf spawning
+                if (canSpawnSpawner && doesSpawn > chunkGen.wolfSpawnerThreshold && y < waterLevel + 120 && y > waterLevel + 50)
+                {
+                    SpawnerSpawn(x, y, z);
                 }
                 i++;
             }
@@ -205,17 +215,14 @@ public class TerrainGeneration : MonoBehaviour
         float y = Mathf.PerlinNoise(noiseVector.x * 0.0005f, noiseVector.y * 0.0005f);
         return SmoothClamp(y, 1);
     }
-
     float PeaksAndValleys(Vector2 noiseVector)
     {
         return Mathf.PerlinNoise(noiseVector.x * 0.003f, noiseVector.y * 0.003f);
     }
-
     float Erosion(Vector2 noiseVector)
     {
         return Mathf.PerlinNoise(noiseVector.x * 0.001f, noiseVector.y * 0.001f);
     }
-
     float SmoothClamp(float value, float threshold)
     {
         if (value <= threshold)
@@ -278,7 +285,7 @@ public class TerrainGeneration : MonoBehaviour
                        z * (128 / chunkGen.chunkResolution.y) + transform.position.z),
                        Quaternion.identity);
         current.transform.parent = transform;
-
+        current.GetComponent<Spawner>().waterLevel = waterLevel;
         spawner = current;
         canSpawnSpawner = false;
     }
